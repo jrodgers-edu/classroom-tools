@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Salt Name Builder</title>
+<style>
+  :root {
+    --primary: #1a5276;
+    --primary-light: #2980b9;
+    --accent: #27ae60;
+    --accent-dark: #1e8449;
+    --warning: #e74c3c;
+    --warning-light: #fadbd8;
+    --success: #d5f5e3;
+    --success-dark: #27ae60;
+    --bg: #f0f4f8;
+    --card: #ffffff;
+    --text: #2c3e50;
+    --text-light: #5d6d7e;
+    --hint-bg: #fef9e7;
+    --hint-border: #f39c12;
+    --ido-bg: #eaf2f8;
+    --wedo-bg: #fef9e7;
+    --youdo-bg: #eafaf1;
+    --radius: 16px;
+    --shadow: 0 4px 15px rgba(0,0,0,0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 18px;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  .app-header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: white;
+    padding: 28px 24px 24px;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  }
+  .app-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+  .app-header p {
+    font-size: 15px;
+    opacity: 0.85;
+    font-weight: 400;
+  }
+
+  /* ── PROGRESS BAR ── */
+  .progress-bar-container {
+    background: rgba(255,255,255,0.2);
+    border-radius: 20px;
+    height: 8px;
+    margin: 16px auto 0;
+    max-width: 400px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    background: white;
+    height: 100%;
+    border-radius: 20px;
+    width: 0%;
+    transition: width 0.5s ease;
+  }
+
+  /* ── KEY FACTS BANNER ── */
+  .key-facts {
+    background: white;
+    margin: 20px 16px;
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    border-left: 5px solid var(--primary-light);
+  }
+  .key-facts h3 {
+    font-size: 17px;
+    color: var(--primary);
+    margin-bottom: 14px;
+    font-weight: 700;
+  }
+  .key-facts-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .key-fact-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .key-fact-icon {
+    font-size: 28px;
+    flex-shrink: 0;
+    width: 40px;
+    text-align: center;
+  }
+  .key-fact-text {
+    font-size: 16px;
+    line-height: 1.4;
+  }
+  .key-fact-text strong {
+    color: var(--primary);
+  }
+
+  /* ── SECTION TABS ── */
+  .section-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 16px 16px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .section-tab {
+    flex-shrink: 0;
+    padding: 12px 18px;
+    border-radius: 12px 12px 0 0;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #d5dbdb;
+    color: var(--text-light);
+    position: relative;
+  }
+  .section-tab.active {
+    background: white;
+    color: var(--primary);
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+  }
+  .section-tab.locked {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .section-tab.completed::after {
+    content: ' ✓';
+    color: var(--accent);
+  }
+
+  /* ── MAIN CONTENT AREA ── */
+  .content-area {
+    padding: 0 16px 120px;
+  }
+
+  .section-panel {
+    display: none;
+    background: white;
+    border-radius: 0 var(--radius) var(--radius) var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .section-panel.active { display: block; }
+
+  .section-intro {
+    padding: 24px;
+    border-bottom: 2px solid var(--bg);
+  }
+  .section-intro h2 {
+    font-size: 22px;
+    color: var(--primary);
+    margin-bottom: 8px;
+  }
+  .section-intro .equation-pattern {
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 16px 20px;
+    font-size: 18px;
+    font-weight: 600;
+    text-align: center;
+    color: var(--primary);
+    margin-top: 12px;
+    letter-spacing: 0.3px;
+  }
+  .section-intro .equation-pattern .arrow { color: var(--accent); margin: 0 8px; }
+
+  /* ── PHASE LABELS ── */
+  .phase-container {
+    padding: 24px;
+  }
+  .phase-label {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 16px;
+  }
+  .phase-label.ido { background: var(--ido-bg); color: #2471a3; }
+  .phase-label.wedo { background: var(--wedo-bg); color: #b7950b; }
+  .phase-label.youdo { background: var(--youdo-bg); color: #1e8449; }
+
+  .phase-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .phase-subtitle {
+    font-size: 15px;
+    color: var(--text-light);
+    margin-bottom: 20px;
+  }
+
+  /* ── I DO: WALKTHROUGH ── */
+  .walkthrough {
+    background: var(--ido-bg);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+  .walkthrough-step {
+    display: none;
+    animation: fadeSlideIn 0.4s ease;
+  }
+  .walkthrough-step.active { display: block; }
+
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    color: white;
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .step-text {
+    font-size: 18px;
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+  .step-text .highlight {
+    background: #d4efdf;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    color: #1e8449;
+  }
+  .step-text .acid-highlight {
+    background: #fadbd8;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    color: #c0392b;
+  }
+  .step-text .salt-highlight {
+    background: #d6eaf8;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    color: #2471a3;
+  }
+
+  .equation-reveal {
+    background: white;
+    border-radius: 12px;
+    padding: 18px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--primary);
+    margin-top: 12px;
+    border: 2px solid var(--primary-light);
+  }
+
+  /* ── PRACTICE ITEM ── */
+  .practice-item {
+    background: white;
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 16px;
+    border: 2px solid var(--bg);
+    transition: border-color 0.3s ease;
+  }
+  .practice-item.correct { border-color: var(--success-dark); background: var(--success); }
+  .practice-item.incorrect { border-color: var(--warning); background: var(--warning-light); }
+
+  .practice-question {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--primary);
+  }
+  .practice-scenario {
+    font-size: 17px;
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+
+  .input-group {
+    margin-bottom: 16px;
+  }
+  .input-group label {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-light);
+    margin-bottom: 6px;
+  }
+
+  /* ── DROPDOWNS ── */
+  select, .text-input {
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 17px;
+    border: 2px solid #d5dbdb;
+    border-radius: 12px;
+    background: white;
+    color: var(--text);
+    appearance: none;
+    -webkit-appearance: none;
+    font-family: inherit;
+    transition: border-color 0.2s ease;
+  }
+  select:focus, .text-input:focus {
+    outline: none;
+    border-color: var(--primary-light);
+  }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%235d6d7e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 20px;
+    padding-right: 44px;
+  }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 28px;
+    font-size: 17px;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    min-height: 52px;
+  }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-primary {
+    background: var(--primary-light);
+    color: white;
+  }
+  .btn-primary:hover { background: var(--primary); }
+
+  .btn-success {
+    background: var(--accent);
+    color: white;
+  }
+  .btn-success:hover { background: var(--accent-dark); }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--primary-light);
+    border: 2px solid var(--primary-light);
+  }
+
+  .btn-next-section {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+    color: white;
+    width: 100%;
+    padding: 18px;
+    font-size: 19px;
+    margin-top: 12px;
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+
+  /* ── HINT BOX ── */
+  .hint-box {
+    background: var(--hint-bg);
+    border: 2px solid var(--hint-border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 12px;
+    display: none;
+    animation: fadeSlideIn 0.3s ease;
+  }
+  .hint-box.visible { display: block; }
+  .hint-box p {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  /* ── FEEDBACK ── */
+  .feedback {
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 16px;
+    display: none;
+    animation: fadeSlideIn 0.3s ease;
+    font-size: 17px;
+    line-height: 1.5;
+  }
+  .feedback.visible { display: block; }
+  .feedback.correct {
+    background: var(--success);
+    border: 2px solid var(--success-dark);
+    color: #1e8449;
+  }
+  .feedback.incorrect {
+    background: var(--warning-light);
+    border: 2px solid var(--warning);
+    color: #922b21;
+  }
+  .feedback .correct-answer {
+    font-weight: 700;
+    margin-top: 8px;
+  }
+
+  /* ── EQUATION DISPLAY ── */
+  .equation-display {
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 16px 20px;
+    text-align: center;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--primary);
+    margin-top: 12px;
+    line-height: 1.5;
+  }
+  .equation-display .arrow { color: var(--accent); margin: 0 6px; font-weight: 700; }
+  .equation-display .plus { color: var(--text-light); margin: 0 4px; }
+
+  /* ── COMPLETION BANNER ── */
+  .completion-banner {
+    background: linear-gradient(135deg, var(--accent) 0%, #1abc9c 100%);
+    color: white;
+    border-radius: var(--radius);
+    padding: 32px 24px;
+    text-align: center;
+    margin: 24px 0;
+    display: none;
+    animation: fadeSlideIn 0.5s ease;
+  }
+  .completion-banner.visible { display: block; }
+  .completion-banner h2 { font-size: 24px; margin-bottom: 8px; }
+  .completion-banner p { font-size: 17px; opacity: 0.9; }
+
+  /* ── RESPONSIVE ── */
+  @media (min-width: 600px) {
+    .key-facts-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (min-width: 768px) {
+    body { font-size: 19px; }
+    .content-area { max-width: 720px; margin: 0 auto; }
+    .key-facts { max-width: 720px; margin: 20px auto; }
+    .section-tabs { max-width: 720px; margin: 0 auto; padding-top: 20px; }
+  }
+
+  /* ── HIDDEN UTILITY ── */
+  .hidden { display: none !important; }
+
+  /* ── DIVIDER ── */
+  .phase-divider {
+    height: 3px;
+    background: var(--bg);
+    margin: 0;
+  }
+
+  /* ── PRACTICE COUNTER ── */
+  .practice-counter {
+    text-align: center;
+    font-size: 15px;
+    color: var(--text-light);
+    font-weight: 600;
+    padding: 8px;
+    margin-bottom: 8px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ HEADER ═══════════ -->
+<div class="app-header">
+  <h1>Salt Name Builder</h1>
+  <p>Learn how to name salts from acid reactions</p>
+  <div class="progress-bar-container">
+    <div class="progress-bar-fill" id="progressBar"></div>
+  </div>
+</div>
+
+<!-- ═══════════ KEY FACTS BANNER ═══════════ -->
+<div class="key-facts" id="keyFacts">
+  <h3>Key Facts — Which acid makes which salt?</h3>
+  <div class="key-facts-grid">
+    <div class="key-fact-item">
+      <div class="key-fact-icon">🟢</div>
+      <div class="key-fact-text"><strong>Hydrochloric acid</strong> → makes <strong>chloride</strong> salts</div>
+    </div>
+    <div class="key-fact-item">
+      <div class="key-fact-icon">🔵</div>
+      <div class="key-fact-text"><strong>Sulfuric acid</strong> → makes <strong>sulfate</strong> salts</div>
+    </div>
+    <div class="key-fact-item">
+      <div class="key-fact-icon">🟠</div>
+      <div class="key-fact-text"><strong>Nitric acid</strong> → makes <strong>nitrate</strong> salts</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION TABS ═══════════ -->
+<div class="section-tabs" id="sectionTabs">
+  <button class="section-tab active" data-section="0">Metal + Acid</button>
+  <button class="section-tab locked" data-section="1">Metal Oxide + Acid</button>
+  <button class="section-tab locked" data-section="2">Metal Hydroxide + Acid</button>
+  <button class="section-tab locked" data-section="3">Metal Carbonate + Acid</button>
+</div>
+
+<!-- ═══════════ CONTENT ═══════════ -->
+<div class="content-area" id="contentArea">
+</div>
+
+<script>
+// ════════════════════════════════════════
+// DATA
+// ════════════════════════════════════════
+
+const ACIDS = {
+  'hydrochloric acid': 'chloride',
+  'sulfuric acid': 'sulfate',
+  'nitric acid': 'nitrate'
+};
+
+const METALS = ['magnesium', 'zinc', 'iron', 'calcium', 'aluminium', 'sodium', 'potassium', 'lithium', 'copper'];
+
+const SECTIONS = [
+  {
+    id: 'metal-acid',
+    title: 'Metal + Acid',
+    subtitle: 'When a metal reacts with an acid, it makes a salt and hydrogen gas.',
+    pattern: { left: ['metal', 'acid'], right: ['salt', 'hydrogen'] },
+    ido: {
+      metal: 'magnesium',
+      acid: 'hydrochloric acid',
+      saltAnion: 'chloride',
+      salt: 'magnesium chloride',
+      products: ['magnesium chloride', 'hydrogen'],
+      steps: [
+        { text: 'We are reacting <span class="highlight">magnesium</span> with <span class="acid-highlight">hydrochloric acid</span>.' },
+        { text: 'First, identify the acid. <span class="acid-highlight">Hydrochloric acid</span> always makes <strong>chloride</strong> salts.' },
+        { text: 'Next, identify the metal. The metal is <span class="highlight">magnesium</span>.' },
+        { text: 'Put them together: the salt is <span class="salt-highlight">magnesium chloride</span>.' },
+        { text: 'The other product when a metal reacts with an acid is always <strong>hydrogen</strong>.' },
+      ],
+      equation: 'magnesium + hydrochloric acid → magnesium chloride + hydrogen'
+    },
+    wedo: [
+      { metal: 'zinc', acid: 'sulfuric acid', salt: 'zinc sulfate', products: ['zinc sulfate', 'hydrogen'],
+        hint: 'Sulfuric acid always makes sulfate salts. The metal is zinc.' },
+      { metal: 'iron', acid: 'nitric acid', salt: 'iron nitrate', products: ['iron nitrate', 'hydrogen'],
+        hint: 'Nitric acid always makes nitrate salts. The metal is iron.' },
+      { metal: 'calcium', acid: 'hydrochloric acid', salt: 'calcium chloride', products: ['calcium chloride', 'hydrogen'],
+        hint: 'Hydrochloric acid always makes chloride salts. The metal is calcium.' },
+    ],
+    youdo: [
+      { metal: 'aluminium', acid: 'sulfuric acid', salt: 'aluminium sulfate', products: ['aluminium sulfate', 'hydrogen'] },
+      { metal: 'sodium', acid: 'hydrochloric acid', salt: 'sodium chloride', products: ['sodium chloride', 'hydrogen'] },
+      { metal: 'potassium', acid: 'nitric acid', salt: 'potassium nitrate', products: ['potassium nitrate', 'hydrogen'] },
+      { metal: 'lithium', acid: 'sulfuric acid', salt: 'lithium sulfate', products: ['lithium sulfate', 'hydrogen'] },
+      { metal: 'zinc', acid: 'hydrochloric acid', salt: 'zinc chloride', products: ['zinc chloride', 'hydrogen'] },
+      { metal: 'magnesium', acid: 'nitric acid', salt: 'magnesium nitrate', products: ['magnesium nitrate', 'hydrogen'] },
+      { metal: 'iron', acid: 'hydrochloric acid', salt: 'iron chloride', products: ['iron chloride', 'hydrogen'] },
+      { metal: 'calcium', acid: 'sulfuric acid', salt: 'calcium sulfate', products: ['calcium sulfate', 'hydrogen'] },
+    ],
+    makeEquation: (item) =>
+      `${item.metal} + ${item.acid} → ${item.salt} + hydrogen`,
+    buildReactants: (item) => `${item.metal} + ${item.acid}`,
+    buildProducts: (item) => `${item.salt} + hydrogen`,
+    otherProduct: 'hydrogen'
+  },
+  {
+    id: 'metal-oxide-acid',
+    title: 'Metal Oxide + Acid',
+    subtitle: 'When a metal oxide reacts with an acid, it makes a salt and water.',
+    pattern: { left: ['metal oxide', 'acid'], right: ['salt', 'water'] },
+    ido: {
+      metal: 'copper',
+      compound: 'copper oxide',
+      acid: 'sulfuric acid',
+      saltAnion: 'sulfate',
+      salt: 'copper sulfate',
+      products: ['copper sulfate', 'water'],
+      steps: [
+        { text: 'We are reacting <span class="highlight">copper oxide</span> with <span class="acid-highlight">sulfuric acid</span>.' },
+        { text: 'First, identify the acid. <span class="acid-highlight">Sulfuric acid</span> always makes <strong>sulfate</strong> salts.' },
+        { text: 'Next, identify the metal. The metal in copper oxide is <span class="highlight">copper</span>.' },
+        { text: 'Put them together: the salt is <span class="salt-highlight">copper sulfate</span>.' },
+        { text: 'When a metal oxide reacts with an acid, the other product is always <strong>water</strong>.' },
+      ],
+      equation: 'copper oxide + sulfuric acid → copper sulfate + water'
+    },
+    wedo: [
+      { metal: 'magnesium', compound: 'magnesium oxide', acid: 'hydrochloric acid', salt: 'magnesium chloride', products: ['magnesium chloride', 'water'],
+        hint: 'Hydrochloric acid makes chloride salts. The metal in magnesium oxide is magnesium.' },
+      { metal: 'zinc', compound: 'zinc oxide', acid: 'nitric acid', salt: 'zinc nitrate', products: ['zinc nitrate', 'water'],
+        hint: 'Nitric acid makes nitrate salts. The metal in zinc oxide is zinc.' },
+      { metal: 'iron', compound: 'iron oxide', acid: 'sulfuric acid', salt: 'iron sulfate', products: ['iron sulfate', 'water'],
+        hint: 'Sulfuric acid makes sulfate salts. The metal in iron oxide is iron.' },
+    ],
+    youdo: [
+      { metal: 'calcium', compound: 'calcium oxide', acid: 'hydrochloric acid', salt: 'calcium chloride', products: ['calcium chloride', 'water'] },
+      { metal: 'sodium', compound: 'sodium oxide', acid: 'nitric acid', salt: 'sodium nitrate', products: ['sodium nitrate', 'water'] },
+      { metal: 'aluminium', compound: 'aluminium oxide', acid: 'sulfuric acid', salt: 'aluminium sulfate', products: ['aluminium sulfate', 'water'] },
+      { metal: 'copper', compound: 'copper oxide', acid: 'hydrochloric acid', salt: 'copper chloride', products: ['copper chloride', 'water'] },
+      { metal: 'potassium', compound: 'potassium oxide', acid: 'sulfuric acid', salt: 'potassium sulfate', products: ['potassium sulfate', 'water'] },
+      { metal: 'lithium', compound: 'lithium oxide', acid: 'nitric acid', salt: 'lithium nitrate', products: ['lithium nitrate', 'water'] },
+      { metal: 'zinc', compound: 'zinc oxide', acid: 'hydrochloric acid', salt: 'zinc chloride', products: ['zinc chloride', 'water'] },
+      { metal: 'magnesium', compound: 'magnesium oxide', acid: 'sulfuric acid', salt: 'magnesium sulfate', products: ['magnesium sulfate', 'water'] },
+    ],
+    makeEquation: (item) =>
+      `${item.compound} + ${item.acid} → ${item.salt} + water`,
+    buildReactants: (item) => `${item.compound} + ${item.acid}`,
+    buildProducts: (item) => `${item.salt} + water`,
+    otherProduct: 'water'
+  },
+  {
+    id: 'metal-hydroxide-acid',
+    title: 'Metal Hydroxide + Acid',
+    subtitle: 'When a metal hydroxide reacts with an acid, it makes a salt and water. This is a neutralisation reaction.',
+    pattern: { left: ['metal hydroxide', 'acid'], right: ['salt', 'water'] },
+    ido: {
+      metal: 'sodium',
+      compound: 'sodium hydroxide',
+      acid: 'hydrochloric acid',
+      saltAnion: 'chloride',
+      salt: 'sodium chloride',
+      products: ['sodium chloride', 'water'],
+      steps: [
+        { text: 'We are reacting <span class="highlight">sodium hydroxide</span> with <span class="acid-highlight">hydrochloric acid</span>.' },
+        { text: 'First, identify the acid. <span class="acid-highlight">Hydrochloric acid</span> always makes <strong>chloride</strong> salts.' },
+        { text: 'Next, identify the metal. The metal in sodium hydroxide is <span class="highlight">sodium</span>.' },
+        { text: 'Put them together: the salt is <span class="salt-highlight">sodium chloride</span>. (This is common table salt!)' },
+        { text: 'When a metal hydroxide reacts with an acid, the other product is always <strong>water</strong>. This is called a <strong>neutralisation reaction</strong>.' },
+      ],
+      equation: 'sodium hydroxide + hydrochloric acid → sodium chloride + water'
+    },
+    wedo: [
+      { metal: 'potassium', compound: 'potassium hydroxide', acid: 'nitric acid', salt: 'potassium nitrate', products: ['potassium nitrate', 'water'],
+        hint: 'Nitric acid makes nitrate salts. The metal in potassium hydroxide is potassium.' },
+      { metal: 'calcium', compound: 'calcium hydroxide', acid: 'sulfuric acid', salt: 'calcium sulfate', products: ['calcium sulfate', 'water'],
+        hint: 'Sulfuric acid makes sulfate salts. The metal in calcium hydroxide is calcium.' },
+      { metal: 'lithium', compound: 'lithium hydroxide', acid: 'hydrochloric acid', salt: 'lithium chloride', products: ['lithium chloride', 'water'],
+        hint: 'Hydrochloric acid makes chloride salts. The metal in lithium hydroxide is lithium.' },
+    ],
+    youdo: [
+      { metal: 'magnesium', compound: 'magnesium hydroxide', acid: 'sulfuric acid', salt: 'magnesium sulfate', products: ['magnesium sulfate', 'water'] },
+      { metal: 'iron', compound: 'iron hydroxide', acid: 'nitric acid', salt: 'iron nitrate', products: ['iron nitrate', 'water'] },
+      { metal: 'aluminium', compound: 'aluminium hydroxide', acid: 'hydrochloric acid', salt: 'aluminium chloride', products: ['aluminium chloride', 'water'] },
+      { metal: 'zinc', compound: 'zinc hydroxide', acid: 'sulfuric acid', salt: 'zinc sulfate', products: ['zinc sulfate', 'water'] },
+      { metal: 'copper', compound: 'copper hydroxide', acid: 'nitric acid', salt: 'copper nitrate', products: ['copper nitrate', 'water'] },
+      { metal: 'sodium', compound: 'sodium hydroxide', acid: 'sulfuric acid', salt: 'sodium sulfate', products: ['sodium sulfate', 'water'] },
+      { metal: 'calcium', compound: 'calcium hydroxide', acid: 'hydrochloric acid', salt: 'calcium chloride', products: ['calcium chloride', 'water'] },
+      { metal: 'potassium', compound: 'potassium hydroxide', acid: 'sulfuric acid', salt: 'potassium sulfate', products: ['potassium sulfate', 'water'] },
+    ],
+    makeEquation: (item) =>
+      `${item.compound} + ${item.acid} → ${item.salt} + water`,
+    buildReactants: (item) => `${item.compound} + ${item.acid}`,
+    buildProducts: (item) => `${item.salt} + water`,
+    otherProduct: 'water'
+  },
+  {
+    id: 'metal-carbonate-acid',
+    title: 'Metal Carbonate + Acid',
+    subtitle: 'When a metal carbonate reacts with an acid, it makes a salt, water, and carbon dioxide.',
+    pattern: { left: ['metal carbonate', 'acid'], right: ['salt', 'water', 'carbon dioxide'] },
+    ido: {
+      metal: 'calcium',
+      compound: 'calcium carbonate',
+      acid: 'hydrochloric acid',
+      saltAnion: 'chloride',
+      salt: 'calcium chloride',
+      products: ['calcium chloride', 'water', 'carbon dioxide'],
+      steps: [
+        { text: 'We are reacting <span class="highlight">calcium carbonate</span> with <span class="acid-highlight">hydrochloric acid</span>.' },
+        { text: 'First, identify the acid. <span class="acid-highlight">Hydrochloric acid</span> always makes <strong>chloride</strong> salts.' },
+        { text: 'Next, identify the metal. The metal in calcium carbonate is <span class="highlight">calcium</span>.' },
+        { text: 'Put them together: the salt is <span class="salt-highlight">calcium chloride</span>.' },
+        { text: 'Metal carbonates are special — they make <strong>three</strong> products: a salt, <strong>water</strong>, and <strong>carbon dioxide</strong>.' },
+      ],
+      equation: 'calcium carbonate + hydrochloric acid → calcium chloride + water + carbon dioxide'
+    },
+    wedo: [
+      { metal: 'sodium', compound: 'sodium carbonate', acid: 'sulfuric acid', salt: 'sodium sulfate', products: ['sodium sulfate', 'water', 'carbon dioxide'],
+        hint: 'Sulfuric acid makes sulfate salts. The metal in sodium carbonate is sodium. Remember: carbonates make three products!' },
+      { metal: 'magnesium', compound: 'magnesium carbonate', acid: 'nitric acid', salt: 'magnesium nitrate', products: ['magnesium nitrate', 'water', 'carbon dioxide'],
+        hint: 'Nitric acid makes nitrate salts. The metal in magnesium carbonate is magnesium.' },
+      { metal: 'zinc', compound: 'zinc carbonate', acid: 'hydrochloric acid', salt: 'zinc chloride', products: ['zinc chloride', 'water', 'carbon dioxide'],
+        hint: 'Hydrochloric acid makes chloride salts. The metal in zinc carbonate is zinc.' },
+    ],
+    youdo: [
+      { metal: 'copper', compound: 'copper carbonate', acid: 'sulfuric acid', salt: 'copper sulfate', products: ['copper sulfate', 'water', 'carbon dioxide'] },
+      { metal: 'lithium', compound: 'lithium carbonate', acid: 'hydrochloric acid', salt: 'lithium chloride', products: ['lithium chloride', 'water', 'carbon dioxide'] },
+      { metal: 'potassium', compound: 'potassium carbonate', acid: 'nitric acid', salt: 'potassium nitrate', products: ['potassium nitrate', 'water', 'carbon dioxide'] },
+      { metal: 'iron', compound: 'iron carbonate', acid: 'sulfuric acid', salt: 'iron sulfate', products: ['iron sulfate', 'water', 'carbon dioxide'] },
+      { metal: 'aluminium', compound: 'aluminium carbonate', acid: 'hydrochloric acid', salt: 'aluminium chloride', products: ['aluminium chloride', 'water', 'carbon dioxide'] },
+      { metal: 'calcium', compound: 'calcium carbonate', acid: 'nitric acid', salt: 'calcium nitrate', products: ['calcium nitrate', 'water', 'carbon dioxide'] },
+      { metal: 'sodium', compound: 'sodium carbonate', acid: 'hydrochloric acid', salt: 'sodium chloride', products: ['sodium chloride', 'water', 'carbon dioxide'] },
+      { metal: 'zinc', compound: 'zinc carbonate', acid: 'sulfuric acid', salt: 'zinc sulfate', products: ['zinc sulfate', 'water', 'carbon dioxide'] },
+    ],
+    makeEquation: (item) =>
+      `${item.compound} + ${item.acid} → ${item.salt} + water + carbon dioxide`,
+    buildReactants: (item) => `${item.compound} + ${item.acid}`,
+    buildProducts: (item) => `${item.salt} + water + carbon dioxide`,
+    otherProduct: 'water + carbon dioxide'
+  }
+];
+
+// ════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════
+
+let currentSection = 0;
+let sectionStates = SECTIONS.map(() => ({
+  phase: 'ido', // ido, wedo, youdo
+  idoStep: 0,
+  wedoIndex: 0,
+  youdoIndex: 0,
+  completed: false
+}));
+
+// ════════════════════════════════════════
+// RENDERING
+// ════════════════════════════════════════
+
+function updateProgressBar() {
+  const totalSections = SECTIONS.length;
+  let progress = 0;
+  sectionStates.forEach((s, i) => {
+    if (s.completed) progress += 1;
+    else if (i === currentSection) {
+      const sec = SECTIONS[i];
+      const totalItems = sec.ido.steps.length + sec.wedo.length + sec.youdo.length;
+      let done = 0;
+      if (s.phase === 'wedo' || s.phase === 'youdo') done += sec.ido.steps.length;
+      if (s.phase === 'wedo') done += s.wedoIndex;
+      if (s.phase === 'youdo') { done += sec.wedo.length; done += s.youdoIndex; }
+      progress += done / totalItems;
+    }
+  });
+  document.getElementById('progressBar').style.width = (progress / totalSections * 100) + '%';
+}
+
+function updateTabs() {
+  const tabs = document.querySelectorAll('.section-tab');
+  tabs.forEach((tab, i) => {
+    tab.classList.remove('active', 'locked', 'completed');
+    if (i === currentSection) tab.classList.add('active');
+    else if (sectionStates[i].completed) tab.classList.add('completed');
+    else if (i > 0 && !sectionStates[i - 1].completed) tab.classList.add('locked');
+  });
+}
+
+function switchSection(index) {
+  if (index > 0 && !sectionStates[index - 1].completed) return;
+  currentSection = index;
+  updateTabs();
+  renderSection();
+  updateProgressBar();
+  window.scrollTo({ top: 200, behavior: 'smooth' });
+}
+
+function renderSection() {
+  const sec = SECTIONS[currentSection];
+  const state = sectionStates[currentSection];
+  const area = document.getElementById('contentArea');
+
+  let html = `<div class="section-panel active">`;
+
+  // Section intro
+  html += `<div class="section-intro">
+    <h2>${sec.title}</h2>
+    <p>${sec.subtitle}</p>
+    <div class="equation-pattern">
+      ${sec.pattern.left.join(' <span class="plus">+</span> ')}
+      <span class="arrow">→</span>
+      ${sec.pattern.right.join(' <span class="plus">+</span> ')}
+    </div>
+  </div>`;
+
+  // I DO phase
+  html += renderIdoPhase(sec, state);
+
+  // WE DO phase
+  if (state.phase === 'wedo' || state.phase === 'youdo') {
+    html += `<div class="phase-divider"></div>`;
+    html += renderWedoPhase(sec, state);
+  }
+
+  // YOU DO phase
+  if (state.phase === 'youdo') {
+    html += `<div class="phase-divider"></div>`;
+    html += renderYoudoPhase(sec, state);
+  }
+
+  html += `</div>`;
+  area.innerHTML = html;
+  attachEventListeners();
+}
+
+function renderIdoPhase(sec, state) {
+  const ido = sec.ido;
+  let html = `<div class="phase-container">
+    <span class="phase-label ido">I Do</span>
+    <h3 class="phase-title">Watch and learn</h3>
+    <p class="phase-subtitle">Follow along as we work through this example step by step.</p>
+    <div class="walkthrough">`;
+
+  // Show steps up to current
+  for (let i = 0; i <= Math.min(state.idoStep, ido.steps.length - 1); i++) {
+    html += `<div class="walkthrough-step active" style="margin-bottom: 16px;">
+      <div class="step-number">${i + 1}</div>
+      <div class="step-text">${ido.steps[i].text}</div>
+    </div>`;
+  }
+
+  // Show equation at end
+  if (state.idoStep >= ido.steps.length) {
+    html += `<div class="equation-reveal">
+      <strong>Full word equation:</strong><br>
+      ${ido.equation}
+    </div>`;
+  }
+
+  html += `</div>`; // end walkthrough
+
+  // Button
+  if (state.idoStep < ido.steps.length) {
+    html += `<div class="btn-group" style="justify-content: center; margin-top:16px;">
+      <button class="btn btn-primary" onclick="advanceIdo()">
+        ${state.idoStep === 0 ? 'Start walkthrough' : 'Next step'}
+      </button>
+    </div>`;
+  } else if (state.phase === 'ido') {
+    html += `<div class="btn-group" style="justify-content: center; margin-top:16px;">
+      <button class="btn btn-success" onclick="moveToWedo()">
+        I understand — let\'s practise together
+      </button>
+    </div>`;
+  }
+
+  html += `</div>`; // end phase-container
+  return html;
+}
+
+function renderWedoPhase(sec, state) {
+  let html = `<div class="phase-container">
+    <span class="phase-label wedo">We Do</span>
+    <h3 class="phase-title">Let's do it together</h3>
+    <p class="phase-subtitle">Try these with hints available if you need them.</p>`;
+
+  for (let i = 0; i <= Math.min(state.wedoIndex, sec.wedo.length - 1); i++) {
+    const item = sec.wedo[i];
+    const isActive = (i === state.wedoIndex && state.phase === 'wedo');
+    const isDone = (i < state.wedoIndex) || (state.phase === 'youdo');
+    html += renderPracticeItem(sec, item, `wedo-${i}`, isActive, isDone, true);
+  }
+
+  if (state.phase === 'wedo' && state.wedoIndex >= sec.wedo.length) {
+    html += `<div class="btn-group" style="justify-content: center; margin-top:16px;">
+      <button class="btn btn-success" onclick="moveToYoudo()">
+        I'm ready to try on my own
+      </button>
+    </div>`;
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+function renderYoudoPhase(sec, state) {
+  let html = `<div class="phase-container">
+    <span class="phase-label youdo">You Do</span>
+    <h3 class="phase-title">Now try on your own</h3>
+    <p class="phase-subtitle">No hints this time — you've got this!</p>`;
+
+  html += `<div class="practice-counter">Question ${Math.min(state.youdoIndex + 1, sec.youdo.length)} of ${sec.youdo.length}</div>`;
+
+  for (let i = 0; i <= Math.min(state.youdoIndex, sec.youdo.length - 1); i++) {
+    const item = sec.youdo[i];
+    const isActive = (i === state.youdoIndex);
+    const isDone = (i < state.youdoIndex);
+    html += renderPracticeItem(sec, item, `youdo-${i}`, isActive, isDone, false);
+  }
+
+  // Section complete
+  if (state.youdoIndex >= sec.youdo.length) {
+    html += `<div class="completion-banner visible">
+      <h2>Section Complete!</h2>
+      <p>You've mastered ${sec.title.toLowerCase()} reactions.</p>
+    </div>`;
+
+    if (currentSection < SECTIONS.length - 1) {
+      html += `<button class="btn btn-next-section" onclick="goToNextSection()">
+        Continue to ${SECTIONS[currentSection + 1].title} →
+      </button>`;
+    } else {
+      html += `<div class="completion-banner visible" style="background: linear-gradient(135deg, #8e44ad, #3498db);">
+        <h2>All sections complete!</h2>
+        <p>You can now name salts from all four types of acid reaction. Brilliant work!</p>
+      </div>`;
+    }
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+function renderPracticeItem(sec, item, id, isActive, isDone, hasHint) {
+  const reactantName = item.compound || item.metal;
+  const sectionIndex = currentSection;
+
+  let html = `<div class="practice-item ${isDone ? 'correct' : ''}" id="item-${id}">
+    <div class="practice-question">${reactantName} + ${item.acid}</div>
+    <p class="practice-scenario">What is the name of the salt produced?</p>`;
+
+  if (isDone) {
+    // Show completed state
+    html += `<div class="equation-display">
+      ${sec.makeEquation(item)}
+    </div>`;
+  } else if (isActive) {
+    // Active question
+    const saltParts = getSaltOptions(item);
+
+    html += `<div class="input-group">
+      <label>Name of the metal in the salt:</label>
+      <select id="select-metal-${id}">
+        <option value="">Choose the metal...</option>
+        ${shuffleArray([...new Set([item.metal, ...getDistractorMetals(item.metal)])]).map(m =>
+          `<option value="${m}">${m}</option>`
+        ).join('')}
+      </select>
+    </div>`;
+
+    html += `<div class="input-group">
+      <label>Type of salt (from the acid):</label>
+      <select id="select-anion-${id}">
+        <option value="">Choose the salt type...</option>
+        <option value="chloride">chloride (from hydrochloric acid)</option>
+        <option value="sulfate">sulfate (from sulfuric acid)</option>
+        <option value="nitrate">nitrate (from nitric acid)</option>
+      </select>
+    </div>`;
+
+    html += `<div class="btn-group">
+      <button class="btn btn-primary" onclick="checkAnswer('${id}', '${item.metal}', '${ACIDS[item.acid]}', ${sectionIndex})">
+        Check my answer
+      </button>`;
+
+    if (hasHint) {
+      html += `<button class="btn btn-outline" onclick="showHint('${id}')">
+        Show hint
+      </button>`;
+    }
+    html += `</div>`;
+
+    if (hasHint && item.hint) {
+      html += `<div class="hint-box" id="hint-${id}">
+        <p><strong>Hint:</strong> ${item.hint}</p>
+      </div>`;
+    }
+
+    html += `<div class="feedback" id="feedback-${id}"></div>`;
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+// ════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════
+
+function getDistractorMetals(correct) {
+  const others = METALS.filter(m => m !== correct);
+  const shuffled = shuffleArray(others);
+  return shuffled.slice(0, 3);
+}
+
+function getSaltOptions(item) {
+  return { metal: item.metal, anion: ACIDS[item.acid] };
+}
+
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ════════════════════════════════════════
+// INTERACTIONS
+// ════════════════════════════════════════
+
+function advanceIdo() {
+  const state = sectionStates[currentSection];
+  const sec = SECTIONS[currentSection];
+  state.idoStep++;
+  renderSection();
+
+  // Scroll to bottom of walkthrough
+  setTimeout(() => {
+    const steps = document.querySelectorAll('.walkthrough-step');
+    if (steps.length > 0) {
+      steps[steps.length - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, 100);
+}
+
+function moveToWedo() {
+  sectionStates[currentSection].phase = 'wedo';
+  renderSection();
+  updateProgressBar();
+  setTimeout(() => {
+    document.querySelector('.phase-label.wedo').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+}
+
+function moveToYoudo() {
+  sectionStates[currentSection].phase = 'youdo';
+  renderSection();
+  updateProgressBar();
+  setTimeout(() => {
+    document.querySelector('.phase-label.youdo').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+}
+
+function showHint(id) {
+  const hint = document.getElementById(`hint-${id}`);
+  if (hint) hint.classList.add('visible');
+}
+
+function checkAnswer(id, correctMetal, correctAnion, sectionIndex) {
+  const metalSelect = document.getElementById(`select-metal-${id}`);
+  const anionSelect = document.getElementById(`select-anion-${id}`);
+  const feedback = document.getElementById(`feedback-${id}`);
+
+  const chosenMetal = metalSelect.value;
+  const chosenAnion = anionSelect.value;
+
+  if (!chosenMetal || !chosenAnion) {
+    feedback.className = 'feedback visible incorrect';
+    feedback.innerHTML = 'Please select both answers before checking.';
+    return;
+  }
+
+  const isCorrect = (chosenMetal === correctMetal && chosenAnion === correctAnion);
+  const saltName = correctMetal + ' ' + correctAnion;
+
+  if (isCorrect) {
+    feedback.className = 'feedback visible correct';
+    feedback.innerHTML = `<strong>Correct!</strong> The salt is <strong>${saltName}</strong>.`;
+
+    const state = sectionStates[sectionIndex];
+    const sec = SECTIONS[sectionIndex];
+
+    // Advance
+    setTimeout(() => {
+      if (state.phase === 'wedo') {
+        state.wedoIndex++;
+      } else if (state.phase === 'youdo') {
+        state.youdoIndex++;
+        if (state.youdoIndex >= sec.youdo.length) {
+          state.completed = true;
+        }
+      }
+      renderSection();
+      updateProgressBar();
+      updateTabs();
+
+      // Scroll to the new active item
+      setTimeout(() => {
+        const items = document.querySelectorAll('.practice-item:not(.correct)');
+        if (items.length > 0) {
+          items[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+    }, 1200);
+  } else {
+    feedback.className = 'feedback visible incorrect';
+    let msg = '<strong>Not quite — try again.</strong><br>';
+    if (chosenMetal !== correctMetal) {
+      msg += `Think about which metal is in the reactant. `;
+    }
+    if (chosenAnion !== correctAnion) {
+      msg += `Remember: which type of salt does ${sec_acid_name(sectionIndex, id)} make?`;
+    }
+    feedback.innerHTML = msg;
+  }
+}
+
+function sec_acid_name(sectionIndex, id) {
+  // Extract acid name from the context
+  const sec = SECTIONS[sectionIndex];
+  const state = sectionStates[sectionIndex];
+  let item;
+  if (id.startsWith('wedo-')) {
+    const idx = parseInt(id.split('-')[1]);
+    item = sec.wedo[idx];
+  } else {
+    const idx = parseInt(id.split('-')[1]);
+    item = sec.youdo[idx];
+  }
+  return item ? item.acid : 'the acid';
+}
+
+function goToNextSection() {
+  switchSection(currentSection + 1);
+}
+
+function attachEventListeners() {
+  // Tab clicks
+  document.querySelectorAll('.section-tab').forEach(tab => {
+    tab.onclick = () => switchSection(parseInt(tab.dataset.section));
+  });
+}
+
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
+
+function init() {
+  updateTabs();
+  renderSection();
+  updateProgressBar();
+
+  // Tab clicks
+  document.querySelectorAll('.section-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      switchSection(parseInt(tab.dataset.section));
+    });
+  });
+}
+
+init();
+</script>
+</body>
+</html>

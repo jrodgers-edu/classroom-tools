@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Fractional Distillation — Separating Crude Oil</title>
+<style>
+  :root{
+    --ink:#1d2733;
+    --paper:#f6f8fa;
+    --card:#ffffff;
+    --accent:#0b5fa5;
+    --accent-soft:#e3eef7;
+    --keyword:#b03a2e;
+    --gases:#4fc3f7;
+    --petrol:#ffb300;
+    --kerosene:#66bb6a;
+    --diesel:#ff7043;
+    --fueloil:#8d6e63;
+    --bitumen:#37474f;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; background:var(--paper); color:var(--ink);
+    font-family:-apple-system, "Segoe UI", Verdana, Arial, sans-serif;
+    font-size:17px; line-height:1.45;}
+  header{
+    display:flex; flex-wrap:wrap; align-items:center; gap:10px;
+    padding:10px 16px; background:var(--card); border-bottom:3px solid var(--accent);
+  }
+  header h1{font-size:1.15rem; margin:0; flex:1 1 auto; min-width:220px;}
+  header h1 small{display:block; font-weight:400; font-size:.8rem; color:#5a6b7d;}
+  .mode-switch{display:flex; border:2px solid var(--accent); border-radius:10px; overflow:hidden;}
+  .mode-switch button{
+    border:none; background:var(--card); color:var(--accent);
+    font-size:.95rem; font-weight:600; padding:9px 16px; cursor:pointer;
+  }
+  .mode-switch button.active{background:var(--accent); color:#fff;}
+  .toolbtn{
+    border:2px solid #c4d2de; background:var(--card); color:var(--ink);
+    font-size:.95rem; font-weight:600; padding:9px 14px; border-radius:10px; cursor:pointer;
+  }
+  .toolbtn:active{background:var(--accent-soft);}
+  main{
+    display:flex; gap:14px; padding:14px; align-items:stretch;
+    max-width:1400px; margin:0 auto;
+  }
+  #stage{
+    flex:1.6 1 0; background:var(--card); border-radius:14px;
+    box-shadow:0 1px 4px rgba(0,0,0,.08); padding:6px; min-width:0;
+  }
+  #stage svg{width:100%; height:auto; display:block; touch-action:manipulation;}
+  #side{
+    flex:1 1 0; display:flex; flex-direction:column; gap:12px; min-width:300px; max-width:430px;
+  }
+  .panel{
+    background:var(--card); border-radius:14px; box-shadow:0 1px 4px rgba(0,0,0,.08);
+    padding:16px 18px;
+  }
+  #caption-title{margin:0 0 6px; font-size:1.08rem; color:var(--accent);}
+  #caption-step{font-size:.78rem; font-weight:700; letter-spacing:.06em;
+    text-transform:uppercase; color:#7a8a99; margin-bottom:2px;}
+  #caption-text{margin:0; font-size:1.02rem;}
+  #caption-text b, #fraction-card b{color:var(--keyword);}
+  .nav-row{display:flex; gap:10px; margin-top:14px;}
+  .nav-row button{
+    flex:1; font-size:1rem; font-weight:700; padding:12px 0; border-radius:10px;
+    border:none; cursor:pointer;
+  }
+  #btn-back{background:var(--accent-soft); color:var(--accent);}
+  #btn-next{background:var(--accent); color:#fff;}
+  .nav-row button:disabled{opacity:.35; cursor:default;}
+  #watch-controls{display:none;}
+  #watch-controls .row{display:flex; align-items:center; gap:12px; margin-top:10px;}
+  #watch-controls label{font-size:.9rem; font-weight:600; color:#5a6b7d;}
+  #speed{flex:1; height:34px;}
+  #btn-play{min-width:96px; font-size:1rem; font-weight:700; padding:10px 14px;
+    border-radius:10px; border:none; background:var(--accent); color:#fff; cursor:pointer;}
+  #btn-reset{font-size:.95rem; font-weight:600; padding:10px 14px; border-radius:10px;
+    border:2px solid #c4d2de; background:var(--card); cursor:pointer;}
+  /* fraction card */
+  #fraction-card{display:none;}
+  #fraction-card .swatch{display:inline-block; width:16px; height:16px; border-radius:4px;
+    margin-right:8px; vertical-align:-2px;}
+  #fraction-card h2{margin:0 0 4px; font-size:1.15rem;}
+  #fraction-card .meta{font-size:.92rem; color:#5a6b7d; margin-bottom:8px;}
+  #fraction-card .use{font-size:1rem; margin:8px 0 12px;}
+  .bar-row{display:flex; align-items:center; gap:8px; margin:7px 0;}
+  .bar-row .bar-label{width:118px; font-size:.85rem; font-weight:600;}
+  .bar-track{flex:1; height:14px; background:#e8edf2; border-radius:7px; overflow:hidden;}
+  .bar-fill{height:100%; border-radius:7px; background:var(--accent); transition:width .4s;}
+  .molecule-line{margin:10px 0 2px; min-height:26px;}
+  .molecule-line span.atom{display:inline-block; width:14px; height:14px; border-radius:50%;
+    background:#54657a; margin-right:2px; vertical-align:middle;}
+  .molecule-line .more{font-weight:700; color:#54657a; letter-spacing:.15em;}
+  #card-close{float:right; border:none; background:#e8edf2; border-radius:8px;
+    font-size:.9rem; font-weight:700; padding:6px 12px; cursor:pointer;}
+  /* overlays */
+  .overlay{
+    display:none; position:fixed; inset:0; background:rgba(20,30,40,.55); z-index:50;
+    padding:20px; overflow:auto;
+  }
+  .overlay.open{display:flex; align-items:flex-start; justify-content:center;}
+  .overlay .sheet{
+    background:var(--card); border-radius:16px; padding:22px 24px; max-width:560px;
+    width:100%; margin-top:4vh; box-shadow:0 8px 30px rgba(0,0,0,.25);
+  }
+  .sheet h2{margin:0 0 12px; font-size:1.2rem; color:var(--accent);}
+  .sheet .close-x{float:right; border:none; background:#e8edf2; border-radius:8px;
+    font-size:1rem; font-weight:700; padding:6px 14px; cursor:pointer;}
+  dl.glossary{margin:0;}
+  dl.glossary dt{font-weight:700; color:var(--keyword); margin-top:12px;}
+  dl.glossary dd{margin:2px 0 0 0;}
+  /* why panel */
+  #why-chain-view{margin:14px 0 4px; min-height:30px;}
+  #why-slider{width:100%; height:38px;}
+  #why-readout{font-size:1rem; margin-top:10px;}
+  #why-readout .frac-name{font-weight:700;}
+  .trend-note{margin-top:14px; padding:10px 14px; background:var(--accent-soft);
+    border-radius:10px; font-size:.95rem;}
+  /* SVG interactive bits */
+  .fraction-label{cursor:pointer;}
+  .fraction-label rect.box{transition:stroke-width .15s;}
+  .fraction-label:active rect.box{stroke-width:4;}
+  .dimmable{transition:opacity .5s;}
+  .dimmed{opacity:.18;}
+  .flame{transform-origin:center bottom; animation:flicker .55s infinite alternate ease-in-out;}
+  .flame.off{display:none;}
+  @keyframes flicker{from{transform:scaleY(1) scaleX(1);} to{transform:scaleY(1.18) scaleX(.92);}}
+  @media (max-width:860px){
+    main{flex-direction:column;}
+    #side{max-width:none;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Fractional Distillation
+    <small>Separating crude oil into useful fractions &middot; AQA GCSE Chemistry</small>
+  </h1>
+  <div class="mode-switch" role="group" aria-label="Mode">
+    <button id="mode-guided" class="active">Guided steps</button>
+    <button id="mode-watch">Watch it work</button>
+  </div>
+  <button class="toolbtn" id="btn-why">Why? Chain length</button>
+  <button class="toolbtn" id="btn-glossary">Key words</button>
+</header>
+
+<main>
+  <div id="stage">
+    <svg id="rig" viewBox="0 0 900 640" aria-label="Fractionating column diagram">
+      <defs>
+        <linearGradient id="columnGrad" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0"   stop-color="#ff5a36"/>
+          <stop offset="0.35" stop-color="#ff9e42"/>
+          <stop offset="0.65" stop-color="#ffd66b"/>
+          <stop offset="1"   stop-color="#9ecdf2"/>
+        </linearGradient>
+        <linearGradient id="oilGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#3a3f47"/>
+          <stop offset="1" stop-color="#15181d"/>
+        </linearGradient>
+      </defs>
+
+      <!-- furnace group -->
+      <g id="g-furnace" class="dimmable">
+        <rect x="38" y="468" width="150" height="140" rx="10" fill="#aeb9c4"/>
+        <rect x="50" y="480" width="126" height="116" rx="6" fill="url(#oilGrad)"/>
+        <text x="113" y="630" text-anchor="middle" font-size="15" font-weight="700" fill="#44525f">Heated crude oil</text>
+        <text id="furnace-temp" x="113" y="462" text-anchor="middle" font-size="14" font-weight="700" fill="#b03a2e"></text>
+        <!-- flames -->
+        <g id="flames">
+          <path class="flame off" d="M70 612 q-8 -16 2 -26 q2 10 8 12 q-2 -14 8 -22 q0 14 8 20 q4 -8 2 -16 q12 12 6 30 q-6 14 -17 14 q-12 0 -17 -12z" fill="#ff8c2e"/>
+          <path class="flame off" d="M110 614 q-8 -16 2 -26 q2 10 8 12 q-2 -14 8 -22 q0 14 8 20 q4 -8 2 -16 q12 12 6 30 q-6 14 -17 14 q-12 0 -17 -12z" fill="#ff6b2e" transform="translate(4,0)"/>
+          <path class="flame off" d="M150 612 q-8 -16 2 -26 q2 10 8 12 q-2 -14 8 -22 q0 14 8 20 q4 -8 2 -16 q12 12 6 30 q-6 14 -17 14 q-12 0 -17 -12z" fill="#ffa12e"/>
+        </g>
+      </g>
+
+      <!-- inlet pipe -->
+      <g id="g-inlet" class="dimmable">
+        <rect x="186" y="528" width="116" height="18" rx="4" fill="#cfd8e0" stroke="#9fb0bf" stroke-width="2"/>
+        <text x="244" y="520" text-anchor="middle" font-size="13" fill="#5a6b7d">vapour in</text>
+      </g>
+
+      <!-- column -->
+      <g id="g-column" class="dimmable">
+        <rect x="302" y="50" width="120" height="556" rx="18" fill="url(#columnGrad)" stroke="#6b7a88" stroke-width="3"/>
+        <!-- trays -->
+        <g stroke="#6b7a88" stroke-width="3" opacity=".55">
+          <line x1="306" y1="180" x2="356" y2="180"/><line x1="370" y1="180" x2="418" y2="180"/>
+          <line x1="306" y1="280" x2="356" y2="280"/><line x1="370" y1="280" x2="418" y2="280"/>
+          <line x1="306" y1="380" x2="356" y2="380"/><line x1="370" y1="380" x2="418" y2="380"/>
+          <line x1="306" y1="470" x2="356" y2="470"/><line x1="370" y1="470" x2="418" y2="470"/>
+        </g>
+        <text x="362" y="628" text-anchor="middle" font-size="15" font-weight="700" fill="#44525f">Fractionating column</text>
+      </g>
+
+      <!-- temperature scale -->
+      <g id="g-temps" class="dimmable" font-size="14" font-weight="700">
+        <text x="292" y="70"  text-anchor="end" fill="#1565c0">25&#176;C  cool</text>
+        <text x="292" y="320" text-anchor="end" fill="#e65100">hotter &#8595;</text>
+        <text x="292" y="596" text-anchor="end" fill="#b03a2e">350&#176;C  hot</text>
+      </g>
+
+      <!-- outlets + labels (built by JS) -->
+      <g id="g-outlets" class="dimmable"></g>
+
+      <!-- particles layer -->
+      <g id="g-particles"></g>
+    </svg>
+  </div>
+
+  <div id="side">
+    <!-- guided caption -->
+    <div class="panel" id="caption-panel">
+      <div id="caption-step"></div>
+      <h2 id="caption-title"></h2>
+      <p id="caption-text"></p>
+      <div class="nav-row">
+        <button id="btn-back">&#8592; Back</button>
+        <button id="btn-next">Next &#8594;</button>
+      </div>
+    </div>
+
+    <!-- watch controls -->
+    <div class="panel" id="watch-controls">
+      <h2 id="watch-title" style="margin:0 0 4px; font-size:1.08rem; color:var(--accent);">Watch it work</h2>
+      <p style="margin:0; font-size:.95rem;">The column runs by itself. Tap any fraction label to learn about it.</p>
+      <div class="row">
+        <button id="btn-play">Pause</button>
+        <button id="btn-reset">Reset</button>
+      </div>
+      <div class="row">
+        <label for="speed">Speed</label>
+        <input type="range" id="speed" min="0.3" max="2.5" step="0.1" value="1">
+      </div>
+    </div>
+
+    <!-- fraction info card -->
+    <div class="panel" id="fraction-card">
+      <button id="card-close">Close</button>
+      <h2><span class="swatch" id="card-swatch"></span><span id="card-name"></span></h2>
+      <div class="meta" id="card-meta"></div>
+      <div class="molecule-line" id="card-molecule"></div>
+      <p class="use" id="card-use"></p>
+      <div class="bar-row"><span class="bar-label">Boiling point</span>
+        <div class="bar-track"><div class="bar-fill" id="bar-bp"></div></div></div>
+      <div class="bar-row"><span class="bar-label">Viscosity (thickness)</span>
+        <div class="bar-track"><div class="bar-fill" id="bar-visc"></div></div></div>
+      <div class="bar-row"><span class="bar-label">Flammability</span>
+        <div class="bar-track"><div class="bar-fill" id="bar-flam"></div></div></div>
+      <p id="card-why" style="font-size:.95rem; margin:12px 0 0;"></p>
+    </div>
+  </div>
+</main>
+
+<!-- WHY overlay -->
+<div class="overlay" id="why-overlay">
+  <div class="sheet">
+    <button class="close-x" data-close="why-overlay">Close</button>
+    <h2>Why does chain length matter?</h2>
+    <p style="margin:0;">Drag the slider to change the number of <b style="color:var(--keyword)">carbon atoms</b> in the hydrocarbon chain.</p>
+    <div id="why-chain-view"></div>
+    <input type="range" id="why-slider" min="1" max="60" step="1" value="8">
+    <div id="why-readout"></div>
+    <div class="bar-row"><span class="bar-label">Boiling point</span>
+      <div class="bar-track"><div class="bar-fill" id="why-bp"></div></div></div>
+    <div class="bar-row"><span class="bar-label">Viscosity (thickness)</span>
+      <div class="bar-track"><div class="bar-fill" id="why-visc"></div></div></div>
+    <div class="bar-row"><span class="bar-label">Flammability</span>
+      <div class="bar-track"><div class="bar-fill" id="why-flam"></div></div></div>
+    <div class="trend-note">
+      <b>The pattern:</b> longer chains have stronger forces between the molecules.
+      More energy is needed to pull them apart, so the boiling point is higher.
+      Long chains also tangle together, making the liquid thicker and harder to ignite.
+    </div>
+  </div>
+</div>
+
+<!-- GLOSSARY overlay -->
+<div class="overlay" id="glossary-overlay">
+  <div class="sheet">
+    <button class="close-x" data-close="glossary-overlay">Close</button>
+    <h2>Key words</h2>
+    <dl class="glossary">
+      <dt>hydrocarbon</dt><dd>A molecule made of hydrogen and carbon atoms only.</dd>
+      <dt>fraction</dt><dd>A group of hydrocarbons with a similar number of carbon atoms and similar boiling points.</dd>
+      <dt>evaporate</dt><dd>To turn from a liquid into a gas (vapour).</dd>
+      <dt>condense</dt><dd>To turn from a gas back into a liquid.</dd>
+      <dt>boiling point</dt><dd>The temperature at which a liquid boils and becomes a gas.</dd>
+      <dt>temperature gradient</dt><dd>A steady change in temperature — here, hot at the bottom of the column and cool at the top.</dd>
+      <dt>viscous</dt><dd>Thick and slow to pour. Honey is more viscous than water.</dd>
+      <dt>flammable</dt><dd>Catches fire easily.</dd>
+    </dl>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ---------------- data ---------------- */
+const FRACTIONS = [
+  { id:"gases",    name:"Refinery gases", carbons:"1–4 carbon atoms",  cAvg:3,
+    bpText:"boils below 25°C", use:"Bottled gas for cooking, heating and camping stoves.",
+    colour:"#4fc3f7", trayY:65,  exit:"top",
+    bars:{bp:6, visc:4, flam:100},
+    why:"Very short chains. The lowest boiling points of all — so low that they never condense in the column. They leave the top as gases." },
+  { id:"petrol",   name:"Petrol", carbons:"5–10 carbon atoms", cAvg:8,
+    bpText:"boils at about 40–100°C", use:"Fuel for cars.",
+    colour:"#ffb300", trayY:180, exit:"side",
+    bars:{bp:25, visc:15, flam:88},
+    why:"Short chains with low boiling points. The vapour rises high up the column before it gets cool enough to condense." },
+  { id:"kerosene", name:"Kerosene", carbons:"10–16 carbon atoms", cAvg:13,
+    bpText:"boils at about 150–200°C", use:"Fuel for aircraft.",
+    colour:"#66bb6a", trayY:280, exit:"side",
+    bars:{bp:48, visc:35, flam:65},
+    why:"Medium chains condense partway up the column, where the temperature matches their boiling point." },
+  { id:"diesel",   name:"Diesel oil", carbons:"14–20 carbon atoms", cAvg:17,
+    bpText:"boils at about 220–300°C", use:"Fuel for lorries, buses and trains.",
+    colour:"#ff7043", trayY:380, exit:"side",
+    bars:{bp:68, visc:55, flam:48},
+    why:"Longer chains have higher boiling points, so the vapour condenses lower down, where the column is hotter." },
+  { id:"fueloil",  name:"Heavy fuel oil", carbons:"20–50 carbon atoms", cAvg:30,
+    bpText:"boils at about 300–350°C", use:"Fuel for ships and power stations.",
+    colour:"#8d6e63", trayY:470, exit:"side",
+    bars:{bp:86, visc:80, flam:25},
+    why:"Long chains with high boiling points condense near the bottom of the column, where it is hottest." },
+  { id:"bitumen",  name:"Bitumen", carbons:"more than 50 carbon atoms", cAvg:55,
+    bpText:"boils above 350°C", use:"Surfacing roads and waterproofing roofs.",
+    colour:"#37474f", trayY:585, exit:"bottom",
+    bars:{bp:100, visc:100, flam:8},
+    why:"The longest chains never evaporate at all. Bitumen stays as a thick liquid and drains out of the bottom of the column." },
+];
+
+const STEPS = [
+  { title:"Crude oil is a mixture",
+    text:"Crude oil is a <b>mixture</b> of <b>hydrocarbons</b> — molecules made of hydrogen and carbon atoms only. Some chains are short. Some are very long. Look at the different sizes in the tank.",
+    dim:["g-column","g-temps","g-outlets","g-inlet"], flame:false, maxPhase:0 },
+  { title:"Heat the oil",
+    text:"The crude oil is heated to about <b>350°C</b>. Most of the hydrocarbons boil and <b>evaporate</b> — they turn from liquid into gas (vapour).",
+    dim:["g-column","g-temps","g-outlets"], flame:true, maxPhase:0 },
+  { title:"Vapour enters the column",
+    text:"The hot vapour is piped into the bottom of the <b>fractionating column</b>. The very longest chains (bitumen) never evaporate. They stay liquid and drain out at the bottom.",
+    dim:["g-temps","g-outlets"], flame:true, maxPhase:1 },
+  { title:"Hot at the bottom, cool at the top",
+    text:"The column has a <b>temperature gradient</b>: about <b>350°C</b> at the bottom and about <b>25°C</b> at the top. The vapour rises and cools as it goes up.",
+    dim:["g-outlets"], flame:true, maxPhase:2 },
+  { title:"Cooling vapour condenses",
+    text:"When vapour cools to just below its <b>boiling point</b>, it <b>condenses</b> — it turns back into a liquid. Long chains have high boiling points, so they condense low down. Short chains condense near the top.",
+    dim:[], flame:true, maxPhase:3 },
+  { title:"Collecting the fractions",
+    text:"Each liquid is collected as a <b>fraction</b> — hydrocarbons with similar boiling points. The shortest chains never condense at all: they leave the top as <b>gases</b>. Tap any fraction label to see what it is used for.",
+    dim:[], flame:true, maxPhase:3 },
+  { title:"The pattern",
+    text:"Longer chains → <b>higher boiling point</b>, more <b>viscous</b> (thicker), harder to ignite. Shorter chains → lower boiling point, runnier, very <b>flammable</b>. Open <b>“Why? Chain length”</b> at the top to explore.",
+    dim:[], flame:true, maxPhase:3 },
+];
+
+/* phases: 0 = in furnace, 1 = travelling to / inside column but holding below tray,
+           2 = rising freely (no condensing), 3 = full cycle (condense + collect) */
+
+/* ---------------- svg setup ---------------- */
+const SVG_NS = "http://www.w3.org/2000/svg";
+const svg = document.getElementById("rig");
+const gParticles = document.getElementById("g-particles");
+const gOutlets = document.getElementById("g-outlets");
+const counts = {};
+
+function buildOutlets(){
+  FRACTIONS.forEach(f=>{
+    counts[f.id] = 0;
+    const g = document.createElementNS(SVG_NS,"g");
+    g.classList.add("fraction-label");
+    g.dataset.id = f.id;
+
+    let pipeY;
+    if(f.exit==="top"){
+      // pipe out of the column top, running right
+      pipeY = 65;
+      const up = document.createElementNS(SVG_NS,"rect");
+      up.setAttribute("x",353); up.setAttribute("y",30);
+      up.setAttribute("width",18); up.setAttribute("height",26);
+      up.setAttribute("fill","#cfd8e0"); up.setAttribute("stroke","#9fb0bf"); up.setAttribute("stroke-width",2);
+      g.appendChild(up);
+      const across = document.createElementNS(SVG_NS,"rect");
+      across.setAttribute("x",353); across.setAttribute("y",30);
+      across.setAttribute("width",212); across.setAttribute("height",16);
+      across.setAttribute("rx",4);
+      across.setAttribute("fill","#cfd8e0"); across.setAttribute("stroke","#9fb0bf"); across.setAttribute("stroke-width",2);
+      g.appendChild(across);
+    } else if(f.exit==="bottom"){
+      pipeY = f.trayY;
+      const pipe = document.createElementNS(SVG_NS,"rect");
+      pipe.setAttribute("x",420); pipe.setAttribute("y",pipeY-8);
+      pipe.setAttribute("width",145); pipe.setAttribute("height",16); pipe.setAttribute("rx",4);
+      pipe.setAttribute("fill","#cfd8e0"); pipe.setAttribute("stroke","#9fb0bf"); pipe.setAttribute("stroke-width",2);
+      g.appendChild(pipe);
+    } else {
+      pipeY = f.trayY;
+      const pipe = document.createElementNS(SVG_NS,"rect");
+      pipe.setAttribute("x",420); pipe.setAttribute("y",pipeY-8);
+      pipe.setAttribute("width",145); pipe.setAttribute("height",16); pipe.setAttribute("rx",4);
+      pipe.setAttribute("fill","#cfd8e0"); pipe.setAttribute("stroke","#9fb0bf"); pipe.setAttribute("stroke-width",2);
+      g.appendChild(pipe);
+    }
+
+    const labelY = (f.exit==="top") ? 38 : pipeY;
+    const box = document.createElementNS(SVG_NS,"rect");
+    box.classList.add("box");
+    box.setAttribute("x",572); box.setAttribute("y",labelY-24);
+    box.setAttribute("width",300); box.setAttribute("height",48); box.setAttribute("rx",10);
+    box.setAttribute("fill","#fff"); box.setAttribute("stroke",f.colour); box.setAttribute("stroke-width",3);
+    g.appendChild(box);
+
+    const dot = document.createElementNS(SVG_NS,"circle");
+    dot.setAttribute("cx",592); dot.setAttribute("cy",labelY); dot.setAttribute("r",9);
+    dot.setAttribute("fill",f.colour);
+    g.appendChild(dot);
+
+    const t1 = document.createElementNS(SVG_NS,"text");
+    t1.setAttribute("x",610); t1.setAttribute("y",labelY-4);
+    t1.setAttribute("font-size",17); t1.setAttribute("font-weight",700); t1.setAttribute("fill","#1d2733");
+    t1.textContent = f.name;
+    g.appendChild(t1);
+
+    const t2 = document.createElementNS(SVG_NS,"text");
+    t2.setAttribute("x",610); t2.setAttribute("y",labelY+15);
+    t2.setAttribute("font-size",13); t2.setAttribute("fill","#5a6b7d");
+    t2.textContent = f.carbons + " · tap for more";
+    g.appendChild(t2);
+
+    const tc = document.createElementNS(SVG_NS,"text");
+    tc.classList.add("counter");
+    tc.setAttribute("x",856); tc.setAttribute("y",labelY+6);
+    tc.setAttribute("font-size",16); tc.setAttribute("font-weight",700);
+    tc.setAttribute("text-anchor","end"); tc.setAttribute("fill",f.colour);
+    tc.textContent = "";
+    g.appendChild(tc);
+    f._counterEl = tc;
+
+    g.addEventListener("click",()=>showCard(f));
+    gOutlets.appendChild(g);
+  });
+}
+buildOutlets();
+
+/* ---------------- particles ---------------- */
+let particles = [];
+let speedMult = 1;
+let playing = true;
+let maxPhase = 0;        // gate from guided steps; 3 in watch mode
+let spawnTimer = 0;
+const MAX_PARTICLES = 46;
+
+function makeParticle(fIdx){
+  const f = FRACTIONS[fIdx];
+  const w = Math.min(8 + f.cAvg*1.1, 52);
+  const el = document.createElementNS(SVG_NS,"rect");
+  el.setAttribute("width",w); el.setAttribute("height",8);
+  el.setAttribute("rx",4);
+  el.setAttribute("fill",f.colour);
+  el.setAttribute("stroke","rgba(0,0,0,.25)");
+  el.setAttribute("stroke-width",1);
+  gParticles.appendChild(el);
+  const p = {
+    f, fIdx, el, w,
+    state:"furnace",
+    x: 58 + Math.random()*100,
+    y: 492 + Math.random()*92,
+    t: Math.random()*Math.PI*2,
+    riseSpeed: 0.55 + (5-fIdx)*0.16 + Math.random()*0.12,
+    baseX: 0,
+  };
+  return p;
+}
+
+function spawnMix(){
+  // weighted mix so every fraction appears
+  const idx = Math.floor(Math.random()*6);
+  particles.push(makeParticle(idx));
+}
+
+function resetParticles(){
+  particles.forEach(p=>p.el.remove());
+  particles = [];
+  FRACTIONS.forEach(f=>{ counts[f.id]=0; f._counterEl.textContent=""; });
+  // seed the furnace with a visible mixture
+  for(let i=0;i<18;i++) spawnMix();
+}
+
+function updateParticle(p, dt){
+  const f = p.f;
+  const jiggle = (maxPhase>=1 || (maxPhase===0 && STEPS[currentStep] && STEPS[currentStep].flame)) ? 1.4 : 0.5;
+  p.t += dt*2;
+
+  switch(p.state){
+    case "furnace":
+      p.x += Math.sin(p.t*1.7)*jiggle*0.4;
+      p.y += Math.cos(p.t*1.3)*jiggle*0.4;
+      p.x = Math.max(54, Math.min(160, p.x));
+      p.y = Math.max(486, Math.min(584, p.y));
+      if(maxPhase>=1){
+        p.state = "pipe";
+      }
+      break;
+    case "pipe":
+      // move to pipe line then across
+      p.y += (537 - p.y)*0.06*dt*60*0.05 + (537-p.y)*0.04;
+      p.x += 1.6*speedMult*dt*60*0.5;
+      if(p.x >= 310){
+        if(f.exit==="bottom"){ p.state="sink"; }
+        else { p.state="rise"; p.baseX = 322 + Math.random()*80; }
+      }
+      break;
+    case "sink":
+      p.y += 0.9*speedMult*dt*60*0.5;
+      p.x = Math.min(p.x + 0.4, 360);
+      if(p.y >= f.trayY){ p.y=f.trayY; p.state="collect"; }
+      break;
+    case "rise": {
+      const hold = (maxPhase < 3);
+      const target = f.trayY + 14;
+      p.x = p.baseX + Math.sin(p.t)*9;
+      if(f.exit==="top" && !hold && p.y <= 70){
+        p.state="topPipe"; p.y=38; break;
+      }
+      if(p.y > target || f.exit==="top"){
+        p.y -= p.riseSpeed*speedMult*dt*60*0.5;
+        if(hold && p.y < target+4 && f.exit!=="top") p.y = target+4;
+        if(hold && f.exit==="top" && p.y < 84) p.y = 84;
+      } else if(!hold){
+        p.state="collect"; p.y=f.trayY;
+      }
+      break;
+    }
+    case "topPipe":
+      p.y = 38;
+      p.x += 1.5*speedMult*dt*60*0.5;
+      if(p.x >= 560){ collect(p); }
+      break;
+    case "collect":
+      p.y = f.trayY;
+      p.x += 1.4*speedMult*dt*60*0.5;
+      if(p.x >= 560){ collect(p); }
+      break;
+  }
+  p.el.setAttribute("x", p.x - p.w/2);
+  p.el.setAttribute("y", p.y - 4);
+}
+
+function collect(p){
+  counts[p.f.id]++;
+  p.f._counterEl.textContent = "×" + counts[p.f.id];
+  p.el.remove();
+  p.dead = true;
+}
+
+let last = performance.now();
+function frame(now){
+  const dt = Math.min((now-last)/1000, 0.05);
+  last = now;
+  if(playing){
+    spawnTimer -= dt*speedMult;
+    if(spawnTimer<=0 && particles.length < MAX_PARTICLES){
+      spawnMix();
+      spawnTimer = 0.5;
+    }
+    particles.forEach(p=>updateParticle(p,dt));
+    particles = particles.filter(p=>!p.dead);
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ---------------- guided mode ---------------- */
+let mode = "guided";
+let currentStep = 0;
+
+const captionPanel = document.getElementById("caption-panel");
+const watchControls = document.getElementById("watch-controls");
+const stepEl = document.getElementById("caption-step");
+const titleEl = document.getElementById("caption-title");
+const textEl = document.getElementById("caption-text");
+const btnBack = document.getElementById("btn-back");
+const btnNext = document.getElementById("btn-next");
+const furnaceTemp = document.getElementById("furnace-temp");
+
+function applyStep(i){
+  currentStep = i;
+  const s = STEPS[i];
+  stepEl.textContent = "Step " + (i+1) + " of " + STEPS.length;
+  titleEl.textContent = s.title;
+  textEl.innerHTML = s.text;
+  btnBack.disabled = (i===0);
+  btnNext.disabled = (i===STEPS.length-1);
+  maxPhase = s.maxPhase;
+  // flames
+  document.querySelectorAll(".flame").forEach(fl=>fl.classList.toggle("off", !s.flame));
+  furnaceTemp.textContent = s.flame ? "350°C" : "";
+  // dimming
+  ["g-furnace","g-inlet","g-column","g-temps","g-outlets"].forEach(id=>{
+    document.getElementById(id).classList.toggle("dimmed", s.dim.includes(id));
+  });
+  hideCard();
+}
+
+btnBack.addEventListener("click",()=>{ if(currentStep>0) applyStep(currentStep-1); });
+btnNext.addEventListener("click",()=>{ if(currentStep<STEPS.length-1) applyStep(currentStep+1); });
+
+/* ---------------- watch mode ---------------- */
+const btnPlay = document.getElementById("btn-play");
+const btnReset = document.getElementById("btn-reset");
+const speedInput = document.getElementById("speed");
+
+btnPlay.addEventListener("click",()=>{
+  playing = !playing;
+  btnPlay.textContent = playing ? "Pause" : "Play";
+});
+btnReset.addEventListener("click",()=>{ resetParticles(); });
+speedInput.addEventListener("input",()=>{ speedMult = parseFloat(speedInput.value); });
+
+/* ---------------- mode switching ---------------- */
+const modeGuided = document.getElementById("mode-guided");
+const modeWatch = document.getElementById("mode-watch");
+
+function setMode(m){
+  mode = m;
+  modeGuided.classList.toggle("active", m==="guided");
+  modeWatch.classList.toggle("active", m==="watch");
+  captionPanel.style.display = (m==="guided") ? "block" : "none";
+  watchControls.style.display = (m==="watch") ? "block" : "none";
+  hideCard();
+  if(m==="guided"){
+    resetParticles();
+    applyStep(0);
+  } else {
+    maxPhase = 3;
+    playing = true;
+    btnPlay.textContent = "Pause";
+    document.querySelectorAll(".flame").forEach(fl=>fl.classList.remove("off"));
+    furnaceTemp.textContent = "350°C";
+    ["g-furnace","g-inlet","g-column","g-temps","g-outlets"].forEach(id=>{
+      document.getElementById(id).classList.remove("dimmed");
+    });
+    resetParticles();
+  }
+}
+modeGuided.addEventListener("click",()=>setMode("guided"));
+modeWatch.addEventListener("click",()=>setMode("watch"));
+
+/* ---------------- fraction card ---------------- */
+const card = document.getElementById("fraction-card");
+function showCard(f){
+  document.getElementById("card-swatch").style.background = f.colour;
+  document.getElementById("card-name").textContent = f.name;
+  document.getElementById("card-meta").textContent = f.carbons + " · " + f.bpText;
+  document.getElementById("card-use").innerHTML = "<b>Use:</b> " + f.use;
+  document.getElementById("bar-bp").style.width = f.bars.bp + "%";
+  document.getElementById("bar-visc").style.width = f.bars.visc + "%";
+  document.getElementById("bar-flam").style.width = f.bars.flam + "%";
+  document.getElementById("card-why").textContent = f.why;
+  const mol = document.getElementById("card-molecule");
+  mol.innerHTML = "";
+  const show = Math.min(f.cAvg, 14);
+  for(let i=0;i<show;i++){
+    const a = document.createElement("span");
+    a.className = "atom";
+    a.style.background = f.colour;
+    a.style.border = "1.5px solid rgba(0,0,0,.3)";
+    mol.appendChild(a);
+  }
+  if(f.cAvg>14){
+    const more = document.createElement("span");
+    more.className = "more";
+    more.textContent = " … (" + f.carbons + ")";
+    mol.appendChild(more);
+  }
+  card.style.display = "block";
+}
+function hideCard(){ card.style.display = "none"; }
+document.getElementById("card-close").addEventListener("click", hideCard);
+
+/* ---------------- overlays ---------------- */
+document.getElementById("btn-why").addEventListener("click",()=>{
+  document.getElementById("why-overlay").classList.add("open");
+  updateWhy();
+});
+document.getElementById("btn-glossary").addEventListener("click",()=>{
+  document.getElementById("glossary-overlay").classList.add("open");
+});
+document.querySelectorAll("[data-close]").forEach(b=>{
+  b.addEventListener("click",()=>document.getElementById(b.dataset.close).classList.remove("open"));
+});
+document.querySelectorAll(".overlay").forEach(o=>{
+  o.addEventListener("click",e=>{ if(e.target===o) o.classList.remove("open"); });
+});
+
+/* why panel */
+const whySlider = document.getElementById("why-slider");
+function fractionForCarbons(c){
+  if(c<=4) return FRACTIONS[0];
+  if(c<=10) return FRACTIONS[1];
+  if(c<=16) return FRACTIONS[2];
+  if(c<=20) return FRACTIONS[3];
+  if(c<=50) return FRACTIONS[4];
+  return FRACTIONS[5];
+}
+function updateWhy(){
+  const c = parseInt(whySlider.value,10);
+  const f = fractionForCarbons(c);
+  const view = document.getElementById("why-chain-view");
+  view.innerHTML = "";
+  const show = Math.min(c, 20);
+  for(let i=0;i<show;i++){
+    const a = document.createElement("span");
+    a.className = "atom";
+    a.style.cssText = "display:inline-block;width:13px;height:13px;border-radius:50%;margin-right:2px;vertical-align:middle;border:1.5px solid rgba(0,0,0,.3);background:"+f.colour+";";
+    view.appendChild(a);
+  }
+  if(c>20){
+    const more = document.createElement("span");
+    more.style.cssText = "font-weight:700;color:#54657a;";
+    more.textContent = " …";
+    view.appendChild(more);
+  }
+  const pct = Math.min(100, Math.round(c/60*100));
+  document.getElementById("why-bp").style.width = Math.max(5,pct) + "%";
+  document.getElementById("why-visc").style.width = Math.max(4,pct) + "%";
+  document.getElementById("why-flam").style.width = Math.max(6,100-pct) + "%";
+  document.getElementById("why-readout").innerHTML =
+    "A chain of <b>" + c + "</b> carbon atom" + (c>1?"s":"") +
+    " belongs to the <span class='frac-name' style='color:"+f.colour+"'>" + f.name.toLowerCase() + "</span> fraction.";
+}
+whySlider.addEventListener("input", updateWhy);
+
+/* ---------------- start ---------------- */
+resetParticles();
+applyStep(0);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

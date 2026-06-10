@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Reaction Profile Builder</title>
+<style>
+  :root {
+    --navy: #1f4e79;
+    --navy-dark: #14365e;
+    --cream: #fff8ec;
+    --red: #c0392b;
+    --green: #2e7d32;
+    --blue: #2980b9;
+    --grey-bg: #f4f6f8;
+    --text: #1a1a1a;
+    --muted: #595959;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--grey-bg);
+    color: var(--text);
+    line-height: 1.4;
+    padding: 12px;
+  }
+
+  .wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  header {
+    background: var(--navy);
+    color: white;
+    padding: 16px 22px;
+    border-radius: 12px 12px 0 0;
+  }
+  header h1 { margin: 0; font-size: 22px; }
+  header p { margin: 4px 0 0; opacity: 0.85; font-size: 14px; }
+
+  .challenge-bar {
+    background: var(--cream);
+    border-left: 6px solid var(--navy);
+    padding: 14px 18px;
+    margin-bottom: 12px;
+  }
+  .challenge-bar .label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    font-weight: 700;
+  }
+  .challenge-bar .prompt {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--navy-dark);
+    margin-top: 4px;
+  }
+
+  .main {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 14px;
+    background: white;
+    padding: 14px;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  @media (max-width: 760px) {
+    .main { grid-template-columns: 1fr; }
+  }
+
+  .chart-wrap {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 8px;
+  }
+
+  svg { display: block; width: 100%; height: auto; }
+
+  .controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .slider-group {
+    background: var(--grey-bg);
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+  .slider-group label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-weight: 600;
+    color: var(--navy-dark);
+    margin-bottom: 6px;
+  }
+  .slider-group .value {
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    background: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    color: var(--text);
+    font-size: 14px;
+    min-width: 56px;
+    text-align: center;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 32px;
+    background: transparent;
+    margin: 0;
+  }
+  input[type=range]::-webkit-slider-runnable-track {
+    height: 8px;
+    background: #d0d7de;
+    border-radius: 4px;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 28px;
+    height: 28px;
+    background: var(--navy);
+    border-radius: 50%;
+    margin-top: -10px;
+    cursor: pointer;
+    border: 3px solid white;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  }
+  input[type=range]::-moz-range-track { height: 8px; background: #d0d7de; border-radius: 4px; }
+  input[type=range]::-moz-range-thumb {
+    width: 28px; height: 28px; background: var(--navy); border-radius: 50%;
+    cursor: pointer; border: 3px solid white;
+  }
+
+  .feedback {
+    border-radius: 8px;
+    padding: 14px 16px;
+    background: var(--grey-bg);
+    border-left: 6px solid #ccc;
+    transition: all 0.2s ease;
+  }
+  .feedback.exo { background: #fbeae7; border-color: var(--red); }
+  .feedback.endo { background: #e8f0f7; border-color: var(--blue); }
+  .feedback.success { background: #e7f4e8; border-color: var(--green); }
+  .feedback h3 { margin: 0 0 6px 0; font-size: 16px; }
+  .feedback p { margin: 4px 0; font-size: 14px; color: var(--text); }
+  .feedback .stat { font-weight: 700; }
+
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  button {
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background: var(--navy);
+    color: white;
+    transition: background 0.15s;
+    min-height: 48px;
+    flex: 1;
+  }
+  button:hover, button:active { background: var(--navy-dark); }
+  button.secondary { background: white; color: var(--navy); border: 2px solid var(--navy); }
+  button.success { background: var(--green); }
+  button:disabled { background: #aaa; cursor: not-allowed; }
+
+  .step-pill {
+    display: inline-block;
+    background: white;
+    color: var(--navy);
+    border: 2px solid var(--navy);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Reaction Profile Builder</h1>
+    <p>Drag the sliders to build the profile. Watch what happens to the line.</p>
+  </header>
+
+  <div class="challenge-bar" id="challengeBar">
+    <span class="label">Challenge <span id="stepNum">1</span> of 4</span>
+    <div class="prompt" id="challengeText">Build any exothermic reaction profile.</div>
+  </div>
+
+  <div class="main">
+    <div class="chart-wrap">
+      <svg id="chart" viewBox="0 0 600 380" xmlns="http://www.w3.org/2000/svg">
+        <!-- axes -->
+        <line x1="60" y1="40" x2="60" y2="340" stroke="#333" stroke-width="2"/>
+        <line x1="60" y1="340" x2="580" y2="340" stroke="#333" stroke-width="2"/>
+        <text x="20" y="200" font-size="14" fill="#333" transform="rotate(-90 20 200)">Energy</text>
+        <text x="320" y="370" font-size="14" fill="#333" text-anchor="middle">Progress of reaction</text>
+
+        <!-- dashed reference lines -->
+        <line id="reactRef" x1="60" y1="0" x2="0" y2="0" stroke="#999" stroke-dasharray="4 4" stroke-width="1"/>
+        <line id="prodRef" x1="0" y1="0" x2="580" y2="0" stroke="#999" stroke-dasharray="4 4" stroke-width="1"/>
+
+        <!-- main curve -->
+        <path id="profile" d="" fill="none" stroke="#1f4e79" stroke-width="3.5" stroke-linecap="round"/>
+
+        <!-- Ea arrow -->
+        <line id="eaLine" x1="0" y1="0" x2="0" y2="0" stroke="#c0392b" stroke-width="2"/>
+        <polygon id="eaArrowTop" points="0,0" fill="#c0392b"/>
+        <polygon id="eaArrowBot" points="0,0" fill="#c0392b"/>
+        <text id="eaLabel" x="0" y="0" font-size="13" fill="#c0392b" font-weight="bold" text-anchor="end">Ea</text>
+
+        <!-- overall energy change arrow -->
+        <line id="oecLine" x1="0" y1="0" x2="0" y2="0" stroke="#2e7d32" stroke-width="2"/>
+        <polygon id="oecArrowTop" points="0,0" fill="#2e7d32"/>
+        <polygon id="oecArrowBot" points="0,0" fill="#2e7d32"/>
+        <text id="oecLabel" x="0" y="0" font-size="13" fill="#2e7d32" font-weight="bold">ΔE</text>
+
+        <!-- labels -->
+        <text id="reactLabel" x="0" y="0" font-size="13" fill="#333">reactants</text>
+        <text id="prodLabel" x="0" y="0" font-size="13" fill="#333">products</text>
+      </svg>
+    </div>
+
+    <div class="controls">
+      <div class="slider-group">
+        <label>Reactant energy <span class="value" id="vReact">40</span></label>
+        <input type="range" id="sReact" min="10" max="90" value="40">
+      </div>
+      <div class="slider-group">
+        <label>Product energy <span class="value" id="vProd">20</span></label>
+        <input type="range" id="sProd" min="10" max="90" value="20">
+      </div>
+      <div class="slider-group">
+        <label>Activation energy (above reactants) <span class="value" id="vEa">35</span></label>
+        <input type="range" id="sEa" min="5" max="60" value="35">
+      </div>
+
+      <div class="feedback" id="feedback">
+        <h3 id="fbTitle">Move the sliders to see the profile change.</h3>
+        <p id="fbBody"></p>
+      </div>
+
+      <div class="nav">
+        <button class="secondary" id="prevBtn">← Back</button>
+        <button id="checkBtn">Check my profile</button>
+        <button id="nextBtn" style="display:none;">Next challenge →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------- Geometry ----------
+const SVG = {
+  xLeft: 60, xRight: 580, yTop: 40, yBottom: 340,
+  reactStart: 60, reactEnd: 180,
+  curveStart: 180, curveEnd: 460,
+  prodStart: 460, prodEnd: 580,
+};
+
+// energy 0-100 mapped to y-coordinate (inverted)
+function energyToY(e) {
+  const t = (100 - e) / 100; // 0 at top
+  return SVG.yTop + t * (SVG.yBottom - SVG.yTop - 20) + 10;
+}
+
+function drawProfile() {
+  const r = +document.getElementById('sReact').value;
+  const p = +document.getElementById('sProd').value;
+  const ea = +document.getElementById('sEa').value;
+  document.getElementById('vReact').textContent = r;
+  document.getElementById('vProd').textContent = p;
+  document.getElementById('vEa').textContent = ea;
+
+  const yR = energyToY(r);
+  const yP = energyToY(p);
+  const peakE = Math.min(100, r + ea);
+  const yPeak = energyToY(peakE);
+
+  // Build smooth path via cubic bezier
+  const xR1 = SVG.reactStart, xR2 = SVG.reactEnd;
+  const xP1 = SVG.prodStart, xP2 = SVG.prodEnd;
+  const xPeak = (SVG.curveStart + SVG.curveEnd) / 2;
+
+  // Start with flat reactants line, then S-curve through peak, then flat products
+  const d = `M ${xR1} ${yR} L ${xR2} ${yR} ` +
+    `C ${xR2 + 40} ${yR}, ${xPeak - 60} ${yPeak}, ${xPeak} ${yPeak} ` +
+    `C ${xPeak + 60} ${yPeak}, ${xP1 - 40} ${yP}, ${xP1} ${yP} ` +
+    `L ${xP2} ${yP}`;
+  document.getElementById('profile').setAttribute('d', d);
+
+  // Reference dashed lines
+  document.getElementById('reactRef').setAttribute('x1', xR2);
+  document.getElementById('reactRef').setAttribute('y1', yR);
+  document.getElementById('reactRef').setAttribute('x2', SVG.xRight - 10);
+  document.getElementById('reactRef').setAttribute('y2', yR);
+  document.getElementById('prodRef').setAttribute('x1', xP1);
+  document.getElementById('prodRef').setAttribute('y1', yP);
+  document.getElementById('prodRef').setAttribute('x2', SVG.xRight - 10);
+  document.getElementById('prodRef').setAttribute('y2', yP);
+
+  // Ea arrow (vertical, on left side of peak)
+  const eaX = xPeak - 80;
+  const eaTop = yPeak;
+  const eaBot = yR;
+  const eaLine = document.getElementById('eaLine');
+  eaLine.setAttribute('x1', eaX); eaLine.setAttribute('x2', eaX);
+  eaLine.setAttribute('y1', eaTop); eaLine.setAttribute('y2', eaBot);
+  // Arrow heads
+  document.getElementById('eaArrowTop').setAttribute('points',
+    `${eaX-4},${eaTop+8} ${eaX+4},${eaTop+8} ${eaX},${eaTop}`);
+  document.getElementById('eaArrowBot').setAttribute('points',
+    `${eaX-4},${eaBot-8} ${eaX+4},${eaBot-8} ${eaX},${eaBot}`);
+  document.getElementById('eaLabel').setAttribute('x', eaX - 6);
+  document.getElementById('eaLabel').setAttribute('y', (eaTop + eaBot) / 2 + 4);
+
+  // Overall energy change arrow (right side)
+  const oecX = SVG.xRight - 5;
+  const oecLine = document.getElementById('oecLine');
+  oecLine.setAttribute('x1', oecX); oecLine.setAttribute('x2', oecX);
+  oecLine.setAttribute('y1', yR); oecLine.setAttribute('y2', yP);
+  document.getElementById('oecArrowTop').setAttribute('points',
+    `${oecX-4},${Math.min(yR,yP)+8} ${oecX+4},${Math.min(yR,yP)+8} ${oecX},${Math.min(yR,yP)}`);
+  document.getElementById('oecArrowBot').setAttribute('points',
+    `${oecX-4},${Math.max(yR,yP)-8} ${oecX+4},${Math.max(yR,yP)-8} ${oecX},${Math.max(yR,yP)}`);
+  document.getElementById('oecLabel').setAttribute('x', oecX - 30);
+  document.getElementById('oecLabel').setAttribute('y', (yR + yP) / 2 + 4);
+
+  // Reactant/product labels
+  document.getElementById('reactLabel').setAttribute('x', xR1 + 4);
+  document.getElementById('reactLabel').setAttribute('y', yR - 6);
+  document.getElementById('prodLabel').setAttribute('x', xP2 - 60);
+  document.getElementById('prodLabel').setAttribute('y', yP - 6);
+
+  updateFeedback();
+}
+
+function getState() {
+  return {
+    r: +document.getElementById('sReact').value,
+    p: +document.getElementById('sProd').value,
+    ea: +document.getElementById('sEa').value,
+  };
+}
+
+function classify(s) {
+  if (s.p < s.r) return 'exo';
+  if (s.p > s.r) return 'endo';
+  return 'neutral';
+}
+
+function updateFeedback() {
+  const s = getState();
+  const type = classify(s);
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback';
+  let title = '', body = '';
+  if (type === 'exo') {
+    fb.classList.add('exo');
+    title = 'Exothermic';
+    body = `Products are <span class="stat">${s.r - s.p}</span> units lower than reactants → energy released to surroundings.`;
+  } else if (type === 'endo') {
+    fb.classList.add('endo');
+    title = 'Endothermic';
+    body = `Products are <span class="stat">${s.p - s.r}</span> units higher than reactants → energy absorbed from surroundings.`;
+  } else {
+    title = 'No overall energy change';
+    body = 'Products and reactants are at the same level. Try moving them apart.';
+  }
+  body += ` Activation energy = <span class="stat">${s.ea}</span> units.`;
+  document.getElementById('fbTitle').textContent = title;
+  document.getElementById('fbBody').innerHTML = body;
+}
+
+// ---------- Challenges ----------
+const challenges = [
+  {
+    prompt: 'Build any exothermic reaction profile.',
+    check: (s) => s.p < s.r - 5,
+    success: 'You built an exothermic profile. Products are lower than reactants, so energy is released.',
+    fail: 'Not yet exothermic. The products need to end LOWER than the reactants.',
+  },
+  {
+    prompt: 'Build any endothermic reaction profile.',
+    check: (s) => s.p > s.r + 5,
+    success: 'You built an endothermic profile. Products are higher than reactants, so energy is absorbed.',
+    fail: 'Not yet endothermic. The products need to end HIGHER than the reactants.',
+  },
+  {
+    prompt: 'Build an exothermic reaction with a LARGE activation energy (Ea above 40).',
+    check: (s) => s.p < s.r - 5 && s.ea >= 40,
+    success: 'A big hump even though products are lower than reactants. The reaction releases energy, but particles still need a lot of energy to get over the barrier.',
+    fail: 'Make sure: products LOWER than reactants AND activation energy at least 40.',
+  },
+  {
+    prompt: 'Build an endothermic reaction with a SMALL activation energy (Ea below 20).',
+    check: (s) => s.p > s.r + 5 && s.ea < 20,
+    success: 'A small hump and products higher than reactants. Easy to start, but energy is absorbed overall.',
+    fail: 'Make sure: products HIGHER than reactants AND activation energy below 20.',
+  },
+];
+
+let stepIdx = 0;
+function setChallenge(i) {
+  stepIdx = i;
+  document.getElementById('stepNum').textContent = i + 1;
+  document.getElementById('challengeText').textContent = challenges[i].prompt;
+  document.getElementById('checkBtn').style.display = 'block';
+  document.getElementById('nextBtn').style.display = 'none';
+  document.getElementById('prevBtn').disabled = i === 0;
+}
+
+document.getElementById('checkBtn').addEventListener('click', () => {
+  const s = getState();
+  const ch = challenges[stepIdx];
+  const fb = document.getElementById('feedback');
+  if (ch.check(s)) {
+    fb.className = 'feedback success';
+    document.getElementById('fbTitle').textContent = '✓ Correct';
+    document.getElementById('fbBody').innerHTML = ch.success;
+    if (stepIdx < challenges.length - 1) {
+      document.getElementById('checkBtn').style.display = 'none';
+      document.getElementById('nextBtn').style.display = 'block';
+    } else {
+      document.getElementById('fbBody').innerHTML = ch.success + ' <br><br><strong>You finished all four challenges. Show Mr Rodgers.</strong>';
+    }
+  } else {
+    fb.className = 'feedback';
+    document.getElementById('fbTitle').textContent = 'Not yet';
+    document.getElementById('fbBody').textContent = ch.fail;
+  }
+});
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+  if (stepIdx < challenges.length - 1) setChallenge(stepIdx + 1);
+});
+document.getElementById('prevBtn').addEventListener('click', () => {
+  if (stepIdx > 0) setChallenge(stepIdx - 1);
+});
+
+['sReact', 'sProd', 'sEa'].forEach(id => {
+  document.getElementById(id).addEventListener('input', drawProfile);
+});
+
+// init
+setChallenge(0);
+drawProfile();
+</script>
+</body>
+</html>
